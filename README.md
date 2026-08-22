@@ -10,10 +10,11 @@
   <img alt="Mustafa Africawala - founding applied AI engineer at First Concepts, MSc at UCL, London" src="hd-name-light.svg" width="880">
 </picture>
 
-> Applied AI engineer in London. I build agent systems and the evaluation<br>
-> layer that shows whether they actually work — architecture, LLM-as-judge<br>
-> harnesses, and the tracing underneath both. Currently founding engineer at<br>
-> First Concepts, Recently graduated with an MSc at UCL, and teaching 24k people to code.
+> Applied AI engineer in London. I build agent systems, and the evaluation<br>
+> layer that tells you whether they're actually working. Mostly that's<br>
+> architecture, LLM-as-judge harnesses, and the tracing underneath both.<br>
+> Right now I'm founding engineer at First Concepts. I recently finished an<br>
+> MSc at UCL, and I teach 24k people to code on the side.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="hd-experience-dark.svg">
@@ -30,9 +31,13 @@
   <img alt="projects" src="hd-projects-light.svg" width="880">
 </picture>
 
-**[chameleon](https://github.com/mustafa3252/chameleon)** — COBOL-to-Python
-migration tool, built at a hackathon.<br>
-<samp>TypeScript</samp>
+**[openOffice](https://github.com/mustafa3252/openOffice)** — the work-from-bed
+era, made literal.<br>
+<samp>Python</samp>
+
+**[vibe-ship-skills](https://github.com/mustafa3252/vibe-ship-skills)** — agent
+skills for shipping: move fast, verify faster, ship cleaner.<br>
+<samp>agent tooling</samp>
 
 **[TDD in practice](https://github.com/Andrei-Constantin-Programmer/TDD_In_Practice)**
 — mining git history across 405 Apache repositories to measure how much
@@ -40,17 +45,13 @@ test-driven development actually happens. With
 [@Andrei-Constantin-Programmer](https://github.com/Andrei-Constantin-Programmer).<br>
 <samp>Python · PyDriller</samp>
 
+**[chameleon](https://github.com/mustafa3252/chameleon)** — COBOL-to-Python
+migration tool, built at a hackathon.<br>
+<samp>TypeScript</samp>
+
 **[vibe-loop-engineering](https://github.com/mustafa3252/vibe-loop-engineering)**
 — a practical loop-engineering kit for people building with AI agents.<br>
 <samp>method</samp>
-
-**[vibe-ship-skills](https://github.com/mustafa3252/vibe-ship-skills)** — agent
-skills for shipping: move fast, verify faster, ship cleaner.<br>
-<samp>agent tooling</samp>
-
-**[openOffice](https://github.com/mustafa3252/openOffice)** — the work-from-bed
-era, made literal.<br>
-<samp>Python</samp>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="hd-stack-dark.svg">
