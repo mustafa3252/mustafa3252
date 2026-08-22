@@ -30,18 +30,27 @@
   <img alt="projects" src="hd-projects-light.svg" width="880">
 </picture>
 
-**[focus-mode](https://github.com/mustafa3252/focus-mode)** — an action-first
-output mode for builders and AI coding agents.<br>
-<samp>agent tooling</samp>
-
-**[vibe-code-map](https://github.com/mustafa3252/vibe-code-map)** — generates a
-small repo context map for Claude, Cursor, Codex and other coding agents, so
-they stop guessing at project layout.<br>
-<samp>JavaScript · context engineering</samp>
-
 **[chameleon](https://github.com/mustafa3252/chameleon)** — COBOL-to-Python
 migration tool, built at a hackathon.<br>
 <samp>TypeScript</samp>
+
+**[TDD in practice](https://github.com/Andrei-Constantin-Programmer/TDD_In_Practice)**
+— mining git history across 405 Apache repositories to measure how much
+test-driven development actually happens. With
+[@Andrei-Constantin-Programmer](https://github.com/Andrei-Constantin-Programmer).<br>
+<samp>Python · PyDriller</samp>
+
+**[vibe-loop-engineering](https://github.com/mustafa3252/vibe-loop-engineering)**
+— a practical loop-engineering kit for people building with AI agents.<br>
+<samp>method</samp>
+
+**[vibe-ship-skills](https://github.com/mustafa3252/vibe-ship-skills)** — agent
+skills for shipping: move fast, verify faster, ship cleaner.<br>
+<samp>agent tooling</samp>
+
+**[openOffice](https://github.com/mustafa3252/openOffice)** — the work-from-bed
+era, made literal.<br>
+<samp>Python</samp>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="hd-stack-dark.svg">
