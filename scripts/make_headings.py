@@ -21,7 +21,7 @@ W = 880
 SECTIONS = ["experience", "projects", "stack", "contributions", "elsewhere"]
 
 NAME = "Mustafa Africawala"
-TAGLINE = "founding applied ai engineer at First Concepts · msc at UCL · London"
+TAGLINE = "founding applied ai engineer at First Concepts · msc from UCL · London"
 
 
 def heading(text: str, pal: dict) -> str:

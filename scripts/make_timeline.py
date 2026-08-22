@@ -21,9 +21,9 @@ from svgkit import ROOT, STACK, THEMES, esc, font_face  # noqa: E402
 NOW = dt.datetime.now(dt.timezone.utc).date().replace(day=1)
 
 # ---------------------------------------------------------------------------
-# ASSUMPTION, flagged so it is easy to correct: the résumé gives June 2026 as
-# the UCL completion date but no start date. 2024 is inferred from a part-time
-# MSc running alongside full-time work. Correct this line if it began later.
+# The UCL start year is inferred: the résumé gives June 2026 as the completion
+# date but no start date, and 2024 fits an MSc running alongside full-time
+# work. Correct the year on that entry if it began later.
 # ---------------------------------------------------------------------------
 
 # Most recent first. (year, organisation, title, note, live)
@@ -35,7 +35,7 @@ ENTRIES = [
     ("2025", "IFRC", "AI Software Engineer, intern",
      "London · jun → sep 2025", False),
     ("2024", "University College London", "MSc Software Systems Engineering",
-     "London · → jun 2026", False),
+     "London · 2024 → jun 2026", False),
     ("2019", "Pandit Deendayal Energy University", "BTech Computer Engineering",
      "india · 2019 → 2023 · gpa 3.9 / 4.0", False),
 ]
@@ -57,7 +57,8 @@ def draw(pal: dict) -> str:
         f'first: founding applied AI engineer at First Concepts from May 2026; '
         f'software engineer at Chaser October 2025 to April 2026; AI software '
         f'engineering intern at IFRC June to September 2025; MSc Software '
-        f'Systems Engineering at University College London to June 2026; BTech '
+        f'Systems Engineering at University College London, completed June '
+        f'2026; BTech '
         f'Computer Engineering at Pandit Deendayal Energy University 2019 to '
         f'2023">',
         f"<defs><style>{font_face('JBMono', 'ui-medium', 500)}"

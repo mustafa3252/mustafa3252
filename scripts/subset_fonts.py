@@ -39,7 +39,7 @@ LATIN = (
 SECTION_WORDS = "experience projects stack contributions elsewhere"
 PLATE_NAME = "Mustafa Africawala"
 PLATE_SUB = ("@mustafa3252 founding applied ai engineer at First Concepts "
-             "\u00b7 msc at UCL \u00b7 London")
+             "\u00b7 msc from UCL \u00b7 London")
 
 uniq = lambda *parts: "".join(sorted(set("".join(parts))))
 
