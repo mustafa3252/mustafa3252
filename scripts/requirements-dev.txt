@@ -1,0 +1,11 @@
+# Only needed to regenerate the portrait and the font subsets, and only ever
+# locally. scripts/generate_stats.py — the one thing CI runs — is standard
+# library only, on purpose: there is nothing here that can break the workflow.
+pillow
+numpy
+opencv-python-headless
+rembg
+onnxruntime
+fonttools
+brotli
+certifi
