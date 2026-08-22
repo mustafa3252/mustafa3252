@@ -273,10 +273,13 @@ def draw_stats(data: dict, pal: dict) -> str:
     line = " ".join(f"{'M' if i == 0 else 'L'}{x:.1f},{y:.1f}" for i, (x, y) in enumerate(pts))
     out.append(
         f'<path d="{line} L{pts[-1][0]:.1f},{gy + gh} L{gx},{gy + gh} Z" '
-        f'fill="{pal["accent"]}" opacity="0.13"/>'
+        f'fill="{pal["ink"]}" opacity="0.10"/>'
     )
-    out.append(f'<path d="{line}" fill="none" stroke="{pal["accent"]}" '
-               f'stroke-width="1.6" stroke-linejoin="round"/>')
+    out.append(f'<path d="{line}" fill="none" stroke="{pal["ink"]}" '
+               f'stroke-width="1.5" stroke-linejoin="round" opacity="0.75"/>')
+    # The one brass mark in this card: where the year actually peaked.
+    px, py = pts[weeks.index(peak)]
+    out.append(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="2.6" fill="{pal["accent"]}"/>')
     out.append(rule(gx, gy + gh, gw, pal))
     out.append(f'<text class="k" x="{gx}" y="{H - 8}">WEEKLY &#183; PEAK {peak}</text>')
     out.append(f'<text class="k" x="{gx + gw}" y="{H - 8}" text-anchor="end">'
@@ -349,14 +352,15 @@ def draw_langs(data: dict, pal: dict) -> str:
             bar_x = x + 96
             track = col_w - 96 - GUTTER
             bar_w = track * (val / peak)
-            # One hue, stepped by opacity. Per-item colouring is what makes a
-            # generated graphic read as noise rather than as a designed thing.
-            op = 0.92 - i * 0.115
+            # Ink at stepped opacity, not colour. Per-item colouring is what
+            # makes a generated graphic read as noise rather than as a
+            # designed thing, and the accent is spent elsewhere.
+            op = 0.88 - i * 0.115
             out.append(f'<text class="v" x="{x}" y="{y + 9}">{esc(name)}</text>')
             out.append(f'<rect x="{bar_x}" y="{y}" width="{track:.1f}" '
                        f'height="10" fill="{pal["faint"]}" rx="1"/>')
             out.append(f'<rect x="{bar_x}" y="{y}" width="{max(1.5, bar_w):.1f}" '
-                       f'height="10" fill="{pal["accent"]}" opacity="{op:.2f}" rx="1"/>')
+                       f'height="10" fill="{pal["ink"]}" opacity="{op:.2f}" rx="1"/>')
             out.append(f'<text class="k" x="{x + col_w}" y="{y + 9}" '
                        f'text-anchor="end">{label(val)} &#183; {val / total * 100:.0f}%</text>')
 
@@ -438,8 +442,8 @@ def draw_year(data: dict, pal: dict) -> str:
             )
             if not line.strip():
                 continue
-            fill = pal["faint"] if lv == 0 else pal["accent"]
-            op = 1.0 if lv == 0 else 0.30 + 0.70 * (lv / steps)
+            fill = pal["faint"] if lv == 0 else pal["ink"]
+            op = 1.0 if lv == 0 else 0.22 + 0.78 * (lv / steps)
             out.append(f'<text class="d" x="{LEFT}" y="{base:.1f}" '
                        f'xml:space="preserve" fill="{fill}" opacity="{op:.2f}"'
                        f'>{esc(line)}</text>')
@@ -450,8 +454,8 @@ def draw_year(data: dict, pal: dict) -> str:
     out.append(f'<text class="k" x="{P}" y="{ly + 4}">LESS</text>')
     for i in range(steps + 1):
         x = P + 42 + i * 15
-        fill = pal["faint"] if i == 0 else pal["accent"]
-        op = 1.0 if i == 0 else 0.30 + 0.70 * (i / steps)
+        fill = pal["faint"] if i == 0 else pal["ink"]
+        op = 1.0 if i == 0 else 0.22 + 0.78 * (i / steps)
         ch = "·" if i == 0 else RAMP[i]
         out.append(f'<text class="d" x="{x}" y="{ly + 6}" fill="{fill}" '
                    f'opacity="{op:.2f}">{esc(ch)}</text>')

@@ -36,9 +36,9 @@ LATIN = (
 # Role-specific sets. A heading only ever prints its own word, so shipping it
 # 94 glyphs is most of a kilobyte wasted in every one of the eight files.
 # Keep these in sync with SECTIONS / NAME / TAGLINE in make_headings.py.
-SECTION_WORDS = "work stack signals elsewhere"
+SECTION_WORDS = "experience projects stack signals elsewhere"
 PLATE_NAME = "Mustafa Africawala"
-PLATE_SUB = ("@mustafa3252 founding ai engineer at First Concepts "
+PLATE_SUB = ("@mustafa3252 founding applied ai engineer at First Concepts "
              "\u00b7 msc at UCL \u00b7 London")
 
 uniq = lambda *parts: "".join(sorted(set("".join(parts))))

@@ -18,10 +18,10 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from svgkit import ROOT, STACK, THEMES, esc, font_face  # noqa: E402
 
 W = 880
-SECTIONS = ["work", "stack", "signals", "elsewhere"]
+SECTIONS = ["experience", "projects", "stack", "signals", "elsewhere"]
 
 NAME = "Mustafa Africawala"
-TAGLINE = "founding ai engineer at First Concepts · msc at UCL · London"
+TAGLINE = "founding applied ai engineer at First Concepts · msc at UCL · London"
 
 
 def heading(text: str, pal: dict) -> str:

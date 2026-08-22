@@ -9,23 +9,25 @@ import pathlib
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 FONT_BUILD = ROOT / "assets" / "fonts" / "build"
 
-# One accent, taken from GitHub's own contribution green so the year heatmap
-# reads as what it is. Everything else is ink and dim. Deliberately no second
-# hue: per-element colouring is what makes generated graphics look like noise.
+# Warm monochrome against GitHub's cool near-black, plus exactly one accent:
+# brass, the colour of instrumentation. It is spent in four places on the whole
+# page -- the typing cursor, the live span, the peak marker, the heading tick --
+# and nowhere else. Bars and the heatmap are ink at varying opacity, because a
+# second hue would buy nothing and cost the page its discipline.
 THEMES = {
     "dark": {
-        "ink":    "#d7dee7",
-        "dim":    "#7d8590",
-        "faint":  "#30363d",
-        "accent": "#3fb950",
-        "rule":   "#21262d",
+        "ink":    "#e8e5e0",
+        "dim":    "#8c867c",
+        "faint":  "#2c2925",
+        "accent": "#d4a640",
+        "rule":   "#282520",
     },
     "light": {
-        "ink":    "#1f2328",
-        "dim":    "#6e7781",
-        "faint":  "#d8dee4",
-        "accent": "#1a7f37",
-        "rule":   "#d8dee4",
+        "ink":    "#1c1a17",
+        "dim":    "#6d675e",
+        "faint":  "#e4e0d9",
+        "accent": "#a8761b",
+        "rule":   "#ded9d2",
     },
 }
 
