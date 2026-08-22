@@ -33,10 +33,7 @@ jobs:
 
       - name: commit only on change
         run: |
-          FILES="stats-dark.svg stats-light.svg \
-                 streak-dark.svg streak-light.svg \
-                 langs-dark.svg langs-light.svg \
-                 year-dark.svg year-light.svg \
+          FILES="year-dark.svg year-light.svg \
                  timeline-dark.svg timeline-light.svg"
           if [ -z "$(git status --porcelain -- $FILES)" ]; then
             echo "no change — nothing to commit"

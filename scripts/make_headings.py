@@ -18,7 +18,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from svgkit import ROOT, STACK, THEMES, esc, font_face  # noqa: E402
 
 W = 880
-SECTIONS = ["experience", "projects", "stack", "signals", "elsewhere"]
+SECTIONS = ["experience", "projects", "stack", "contributions", "elsewhere"]
 
 NAME = "Mustafa Africawala"
 TAGLINE = "founding applied ai engineer at First Concepts · msc at UCL · London"

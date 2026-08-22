@@ -70,22 +70,8 @@ React · Node · Django · Postgres · Supabase · Convex · Azure · Docker ·
 GitHub Actions
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="hd-signals-dark.svg">
-  <img alt="signals" src="hd-signals-light.svg" width="880">
-</picture>
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="stats-dark.svg">
-  <img alt="Contributions in the last year, with a weekly sparkline" src="stats-light.svg" width="430">
-</picture>
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="streak-dark.svg">
-  <img alt="Current and longest contribution streak" src="streak-light.svg" width="430">
-</picture>
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="langs-dark.svg">
-  <img alt="Top languages by bytes of code and by number of repositories" src="langs-light.svg" width="880">
+  <source media="(prefers-color-scheme: dark)" srcset="hd-contributions-dark.svg">
+  <img alt="contributions" src="hd-contributions-light.svg" width="880">
 </picture>
 
 <picture>
@@ -123,11 +109,12 @@ stops rather than looping in your peripheral vision.
 the one entry that has not ended, which is also the only brass on the graphic —
 the accent is spent on status, never on decoration.
 
-<samp>generate_stats.py</samp> draws the four contribution graphics from the
-GitHub GraphQL API using only the Python standard library. A scheduled action
-reruns it each morning and commits only when a number actually changed — the
-window is pinned to whole UTC days and repositories are filtered to public, so
-two runs produce byte-identical files instead of a nightly stream of noise.
+<samp>generate_stats.py</samp> draws the contribution grid from the GitHub
+GraphQL API using only the Python standard library. A scheduled action reruns
+it each morning and commits only when a number actually changed: the window is
+pinned to whole UTC days, so two runs produce byte-identical files instead of a
+nightly stream of noise. One square is defined once and referenced 365 times,
+so each day costs only its coordinates.
 
 Headings are images because GitHub strips <samp>&lt;style&gt;</samp>,
 <samp>style=""</samp>, <samp>class=""</samp> and inline SVG from README

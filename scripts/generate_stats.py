@@ -1,21 +1,14 @@
 #!/usr/bin/env python3
-"""Draw four contribution graphics from the GitHub GraphQL API.
+"""Draw the contribution graphic from the GitHub GraphQL API.
 
 Standard library only -- urllib for the API, nothing to break in CI.
 
     GITHUB_TOKEN=... GH_LOGIN=mustafa3252 python3 scripts/generate_stats.py
 
-Two determinism traps are handled here, and both matter. Miss either and the
-scheduled job produces a nightly stream of meaningless commits:
-
-  1. The contribution window is pinned to whole UTC days. Left alone,
-     contributionsCollection measures "the past year" from the moment of the
-     request, so two runs minutes apart bucket days into different weeks and
-     shift the sparkline by a fraction of a pixel.
-
-  2. Repositories are filtered to public only. A personal token sees private
-     repos; the workflow's GITHUB_TOKEN does not. Without the filter, language
-     percentages disagree depending on who ran the script.
+The determinism trap this handles: the contribution window is pinned to whole
+UTC days. Left alone, contributionsCollection measures "the past year" from
+the moment of the request, so two runs minutes apart bucket boundary days into
+different weeks and the grid shifts. That is a commit every night, forever.
 """
 import bisect
 import datetime as dt
@@ -51,26 +44,6 @@ query($login:String!, $from:DateTime!, $to:DateTime!) {
 }
 """
 
-REPO_Q = """
-query($login:String!, $cursor:String) {
-  user(login:$login) {
-    repositories(first:100, privacy:PUBLIC, ownerAffiliations:OWNER,
-                 isFork:false, after:$cursor) {
-      totalCount
-      pageInfo { hasNextPage endCursor }
-      nodes {
-        name stargazerCount forkCount
-        primaryLanguage { name }
-        languages(first:12, orderBy:{field:SIZE, direction:DESC}) {
-          edges { size node { name } }
-        }
-      }
-    }
-  }
-}
-"""
-
-
 # --------------------------------------------------------------------------
 # API
 # --------------------------------------------------------------------------
@@ -102,16 +75,7 @@ def fetch(token: str, login: str) -> dict:
     to = f"{today.isoformat()}T23:59:59Z"
 
     user = query(token, USER_Q, {"login": login, "from": frm, "to": to})["user"]
-
-    repos, cursor = [], None
-    while True:
-        page = query(token, REPO_Q, {"login": login, "cursor": cursor})["user"]["repositories"]
-        repos.extend(page["nodes"])
-        if not page["pageInfo"]["hasNextPage"]:
-            break
-        cursor = page["pageInfo"]["endCursor"]
-
-    return {"user": user, "repos": repos, "window": (start, today)}
+    return {"user": user, "window": (start, today)}
 
 
 # --------------------------------------------------------------------------
@@ -126,76 +90,6 @@ def calendar_days(user: dict) -> list[tuple[dt.date, int]]:
     ]
 
 
-def streaks(days: list[tuple[dt.date, int]]) -> dict:
-    """Current and longest run of consecutive active days.
-
-    Only the last 365 days are in the calendar, so both are in-window figures
-    and the graphic says so rather than implying all-time.
-    """
-    best = cur = 0
-    best_end = cur_start = None
-    for date, count in days:
-        if count:
-            cur = cur + 1 if cur else 1
-            if cur == 1:
-                cur_start = date
-            if cur > best:
-                best, best_end = cur, date
-        else:
-            cur, cur_start = 0, None
-
-    # A day with no contributions yet does not break a live streak until it
-    # ends, so fall back to the run that finished yesterday.
-    trailing, t_start = cur, cur_start
-    if not trailing and len(days) > 1:
-        run, start = 0, None
-        for date, count in days[:-1]:
-            if count:
-                run = run + 1 if run else 1
-                if run == 1:
-                    start = date
-            else:
-                run, start = 0, None
-        trailing, t_start = run, start
-
-    return {
-        "current": trailing,
-        "current_from": t_start,
-        "current_to": days[-1][0] if trailing else None,
-        "longest": best,
-        "longest_to": best_end,
-        "longest_from": best_end - dt.timedelta(days=best - 1) if best else None,
-    }
-
-
-def language_totals(repos: list[dict]) -> tuple[list, list]:
-    by_bytes: dict[str, int] = {}
-    by_repo: dict[str, int] = {}
-    for r in repos:
-        for edge in r["languages"]["edges"]:
-            by_bytes[edge["node"]["name"]] = (
-                by_bytes.get(edge["node"]["name"], 0) + edge["size"]
-            )
-        primary = r.get("primaryLanguage")
-        if primary:
-            by_repo[primary["name"]] = by_repo.get(primary["name"], 0) + 1
-    rank = lambda d: sorted(d.items(), key=lambda kv: (-kv[1], kv[0]))
-    return rank(by_bytes), rank(by_repo)
-
-
-def compact(n: int) -> str:
-    if n >= 1_000_000:
-        return f"{n / 1_000_000:.1f}M".replace(".0M", "M")
-    if n >= 10_000:
-        return f"{n // 1000}k"
-    if n >= 1_000:
-        return f"{n / 1000:.1f}k".replace(".0k", "k")
-    return str(n)
-
-
-# --------------------------------------------------------------------------
-# Drawing
-# --------------------------------------------------------------------------
 def head(w: int, h: int, pal: dict, label: str, *, subsets=("ui", "ui-bold")) -> list[str]:
     faces = "".join(
         font_face("JBMono", s, 700 if s.endswith("bold") else 400) for s in subsets
@@ -227,246 +121,112 @@ def card_label(text: str, x: float, y: float, w: float, pal: dict) -> str:
     )
 
 
-def draw_stats(data: dict, pal: dict) -> str:
-    W, H, P = 430, 172, 18
-    user = data["user"]
-    cc = user["contributionsCollection"]
-    days = calendar_days(user)
-    total = cc["contributionCalendar"]["totalContributions"]
+def draw_year(data: dict, pal: dict) -> str:
+    """A square per day for the past year.
+
+    The earlier version drew each day as a character from the portrait's ramp.
+    At one glyph per day the shapes of the characters compete with the pattern
+    they are meant to form, and the graphic reads as noise. Squares carry the
+    same information with nothing left over to decode.
+    """
+    W, P = 880, 20
+    days = calendar_days(data["user"])
+    cal = data["user"]["contributionsCollection"]["contributionCalendar"]
+    total = cal["totalContributions"]
     active = sum(1 for _, c in days if c)
 
-    out = head(W, H, pal, f"{total} contributions in the last year")
-    out.append(card_label("contributions", P, 22, W - P, pal))
+    PITCH, CELL = 15, 12
+    LEFT = P + 38
+    GRID_Y = 62
+    H = GRID_Y + 7 * PITCH + 52
 
-    out.append(f'<text class="big" x="{P}" y="{62}">{total:,}</text>')
-    out.append(
-        f'<text class="k" x="{P}" y="{80}">'
-        f"PAST 365 DAYS &#183; {active} ACTIVE</text>"
-    )
-
-    # Breakdown, right-aligned so the hero number owns the left edge.
-    rows = [
-        ("commits", cc["totalCommitContributions"]),
-        ("pull requests", cc["totalPullRequestContributions"]),
-        ("reviews", cc["totalPullRequestReviewContributions"]),
-        ("issues", cc["totalIssueContributions"]),
-    ]
-    for i, (name, val) in enumerate(rows):
-        y = 36 + i * 15
-        out.append(f'<text class="k" x="{W - P - 44}" y="{y}" text-anchor="end">{name.upper()}</text>')
-        out.append(f'<text class="v" x="{W - P}" y="{y}" text-anchor="end">{val:,}</text>')
-
-    # Weekly aggregate, drawn as an area. A line over *daily* counts would be
-    # dishonest -- it claims values between two zero days that never existed --
-    # but weekly totals are continuous enough for the interpolation to mean
-    # something.
-    weeks = [
-        sum(c for _, c in days[i:i + 7]) for i in range(0, len(days) - 6, 7)
-    ]
-    gx, gy, gw, gh = P, 96, W - P * 2, 52
-    peak = max(weeks) or 1
-    step = gw / max(1, len(weeks) - 1)
-    pts = [
-        (gx + i * step, gy + gh - (v / peak) * gh)
-        for i, v in enumerate(weeks)
-    ]
-    line = " ".join(f"{'M' if i == 0 else 'L'}{x:.1f},{y:.1f}" for i, (x, y) in enumerate(pts))
-    out.append(
-        f'<path d="{line} L{pts[-1][0]:.1f},{gy + gh} L{gx},{gy + gh} Z" '
-        f'fill="{pal["ink"]}" opacity="0.10"/>'
-    )
-    out.append(f'<path d="{line}" fill="none" stroke="{pal["ink"]}" '
-               f'stroke-width="1.5" stroke-linejoin="round" opacity="0.75"/>')
-    # The one brass mark in this card: where the year actually peaked.
-    px, py = pts[weeks.index(peak)]
-    out.append(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="2.6" fill="{pal["accent"]}"/>')
-    out.append(rule(gx, gy + gh, gw, pal))
-    out.append(f'<text class="k" x="{gx}" y="{H - 8}">WEEKLY &#183; PEAK {peak}</text>')
-    out.append(f'<text class="k" x="{gx + gw}" y="{H - 8}" text-anchor="end">'
-               f"{len(weeks)} WEEKS</text>")
-    out.append("</svg>")
-    return "".join(out)
-
-
-def draw_streak(data: dict, pal: dict) -> str:
-    W, H, P = 430, 172, 18
-    days = calendar_days(data["user"])
-    s = streaks(days)
-    repos = data["repos"]
-
-    fmt = lambda d: d.strftime("%d %b %Y").lstrip("0") if d else "--"
-
-    out = head(W, H, pal, f"current streak {s['current']} days")
-    out.append(card_label("streak", P, 22, W - P, pal))
-
-    blocks = [
-        ("CURRENT", s["current"], s["current_from"], s["current_to"]),
-        ("LONGEST", s["longest"], s["longest_from"], s["longest_to"]),
-    ]
-    for i, (name, val, a, b) in enumerate(blocks):
-        x = P + i * (W - P * 2) / 2
-        out.append(f'<text class="k" x="{x}" y="{46}">{name}</text>')
-        out.append(f'<text class="mid" x="{x}" y="{70}">{val}'
-                   f'<tspan class="k" dx="5">DAY{"" if val == 1 else "S"}</tspan></text>')
-        out.append(f'<text class="k" x="{x}" y="{88}">{fmt(a)} &#8594; {fmt(b)}</text>')
-
-    out.append(rule(P, 104, W - P * 2, pal))
-
-    footer = [
-        ("repositories", len(repos)),
-        ("stars", sum(r["stargazerCount"] for r in repos)),
-        ("forks", sum(r["forkCount"] for r in repos)),
-        ("followers", data["user"]["followers"]["totalCount"]),
-    ]
-    for i, (name, val) in enumerate(footer):
-        x = P + i * (W - P * 2) / 4
-        out.append(f'<text class="k" x="{x}" y="{128}">{name.upper()}</text>')
-        out.append(f'<text class="mid" x="{x}" y="{152}">{compact(val)}</text>')
-
-    out.append(f'<text class="k" x="{P}" y="{H - 6}">'
-               f"WITHIN THE PAST 365 DAYS &#183; PUBLIC ACTIVITY</text>")
-    out.append("</svg>")
-    return "".join(out)
-
-
-def draw_langs(data: dict, pal: dict) -> str:
-    W, H, P = 880, 236, 20
-    by_bytes, by_repo = language_totals(data["repos"])
-    out = head(W, H, pal, "top languages")
-    out.append(card_label("languages", P, 24, W - P, pal))
-
-    col_w = (W - P * 2 - 40) / 2
-    GUTTER = 100          # room for the right-aligned value, clear of the bar
-    panels = [
-        ("BY BYTES OF CODE", by_bytes[:6], lambda v: f"{v / 1_048_576:.1f} MB", P),
-        ("BY REPOSITORIES", by_repo[:6], lambda v: f"{v} repo{'' if v == 1 else 's'}",
-         P + col_w + 40),
-    ]
-
-    for title, rows, label, x in panels:
-        out.append(f'<text class="k" x="{x}" y="{50}">{title}</text>')
-        peak = max((v for _, v in rows), default=1) or 1
-        total = sum(v for _, v in rows) or 1
-        for i, (name, val) in enumerate(rows):
-            y = 68 + i * 22
-            bar_x = x + 96
-            track = col_w - 96 - GUTTER
-            bar_w = track * (val / peak)
-            # Ink at stepped opacity, not colour. Per-item colouring is what
-            # makes a generated graphic read as noise rather than as a
-            # designed thing, and the accent is spent elsewhere.
-            op = 0.88 - i * 0.115
-            out.append(f'<text class="v" x="{x}" y="{y + 9}">{esc(name)}</text>')
-            out.append(f'<rect x="{bar_x}" y="{y}" width="{track:.1f}" '
-                       f'height="10" fill="{pal["faint"]}" rx="1"/>')
-            out.append(f'<rect x="{bar_x}" y="{y}" width="{max(1.5, bar_w):.1f}" '
-                       f'height="10" fill="{pal["ink"]}" opacity="{op:.2f}" rx="1"/>')
-            out.append(f'<text class="k" x="{x + col_w}" y="{y + 9}" '
-                       f'text-anchor="end">{label(val)} &#183; {val / total * 100:.0f}%</text>')
-
-    out.append(rule(P, H - 26, W - P * 2, pal))
-    out.append(f'<text class="k" x="{P}" y="{H - 10}">'
-               f"{len(data['repos'])} PUBLIC SOURCE REPOSITORIES &#183; FORKS EXCLUDED</text>")
-    out.append("</svg>")
-    return "".join(out)
-
-
-def draw_year(data: dict, pal: dict) -> str:
-    """The year at one character per day, drawn with the portrait's own ramp."""
-    W, H, P = 880, 284, 20
-    days = calendar_days(data["user"])
-    counts = dict(days)
-
-    FS = 19.5
-    CW = FS * 0.6                 # 0.600 em, the same grid the portrait uses
-    LH = CW / 0.48
-    LEFT = P + 44
-
-    # Columns are ISO-style weeks starting Sunday, matching GitHub's own graph.
+    # Columns are weeks starting Sunday, matching GitHub's own graph.
     first = days[0][0]
     origin = first - dt.timedelta(days=(first.weekday() + 1) % 7)
-    cells: dict[tuple[int, int], tuple[dt.date, int]] = {}
+    cells = {}
     for date, count in days:
-        col = (date - origin).days // 7
-        row = (date.weekday() + 1) % 7
-        cells[(row, col)] = (date, count)
+        cells[((date.weekday() + 1) % 7, (date - origin).days // 7)] = (date, count)
     ncols = max(c for _, c in cells) + 1
 
-    # Rank-based levels, not linear ones. A handful of 80-contribution days
-    # would otherwise flatten every ordinary day onto the same ramp step.
-    active = sorted(c for _, c in days if c)
-    steps = len(RAMP) - 1
+    # Rank-based levels, not linear ones. A handful of very heavy days would
+    # otherwise flatten every ordinary day onto the same step.
+    counts = sorted(c for _, c in days if c)
+    STEPS = 4
+    OPACITY = {1: 0.22, 2: 0.42, 3: 0.66, 4: 0.92}
 
     def level(count: int) -> int:
-        if not count or not active:
+        if not count or not counts:
             return 0
-        rank = bisect.bisect_left(active, count) / len(active)
-        return max(1, min(steps, 1 + int(rank * (steps - 1) + 0.5)))
+        rank = bisect.bisect_left(counts, count) / len(counts)
+        return max(1, min(STEPS, 1 + int(rank * (STEPS - 1) + 0.5)))
 
-    out = head(W, H, pal, "contributions for each day of the past year")
-    out.append(f"<style>.d{{font-size:{FS}px;white-space:pre;}}</style>")
-    out.append(card_label("the year, one character per day", P, 24, W - P, pal))
+    peak_date, peak = max(days, key=lambda kv: kv[1])
 
-    # Month labels, placed on the column that carries each 1st.
+    # One subset, not two: nothing on this card is bold, and the font is
+    # inlined per file so an unused face is dead weight in every byte served.
+    o = head(W, H, pal, f"{total} contributions over the past year, one square "
+                        f"per day; busiest day {peak}", subsets=("ui",))
+    o.append(f'<defs><rect id="c" width="{CELL}" height="{CELL}" rx="2.5"/></defs>')
+    o.append(card_label("the past year", P, 22, W - P, pal))
+    o.append(f'<text class="k" x="{W - P}" y="22" text-anchor="end">'
+             f"{total:,} CONTRIBUTIONS &#183; {active} ACTIVE DAYS</text>")
+
     seen = set()
     for (row, col), (date, _) in sorted(cells.items(), key=lambda kv: kv[0][1]):
         if date.day <= 7 and date.month not in seen:
             seen.add(date.month)
-            out.append(f'<text class="k" x="{LEFT + col * CW:.1f}" y="{52}">'
-                       f"{date.strftime('%b').upper()}</text>")
+            o.append(f'<text class="k" x="{LEFT + col * PITCH:.0f}" y="{GRID_Y - 12}">'
+                     f"{date.strftime('%b').upper()}</text>")
 
+    # Bucket the cells by appearance and emit one <g> per bucket. Repeating
+    # fill= and opacity= on 365 rects costs more than the grid itself.
+    buckets: dict[tuple[str, float], list[str]] = {}
     for row in range(7):
-        y = 68 + row * LH
-        base = y + FS * 0.78
+        y = GRID_Y + row * PITCH
         if row in (1, 3, 5):
-            out.append(f'<text class="k" x="{P}" y="{y + FS * 0.72:.1f}">'
-                       f"{['', 'MON', '', 'WED', '', 'FRI', ''][row]}</text>")
-
-        # Group the row's days by ramp level and emit one <text> per level,
-        # each carrying its own opacity. A <tspan> per day would triple the
-        # file size for no visual gain, and the grid stays aligned because
-        # every run is padded with spaces to the same column positions.
-        levels: dict[int, list[str]] = {}
+            o.append(f'<text class="k" x="{P}" y="{y + CELL - 2}">'
+                     f"{['', 'MON', '', 'WED', '', 'FRI', ''][row]}</text>")
         for col in range(ncols):
             hit = cells.get((row, col))
-            lv = level(hit[1]) if hit else -1        # -1 = outside the window
-            levels.setdefault(lv, [])
-        for lv in levels:
-            if lv < 0:
+            if hit is None:
                 continue
-            glyph = "\u00b7" if lv == 0 else RAMP[lv]
-            line = "".join(
-                glyph if (cells.get((row, c)) is not None
-                          and level(cells[(row, c)][1]) == lv) else " "
-                for c in range(ncols)
+            date, count = hit
+            # The single brass cell is the busiest day of the year. Everywhere
+            # else the accent is spent on status, never on magnitude.
+            if date == peak_date:
+                key = (pal["accent"], 1.0)
+            elif count:
+                key = (pal["ink"], OPACITY[level(count)])
+            else:
+                key = (pal["faint"], 1.0)
+            buckets.setdefault(key, []).append(
+                f'<use href="#c" x="{LEFT + col * PITCH}" y="{y}"/>'
             )
-            if not line.strip():
-                continue
-            fill = pal["faint"] if lv == 0 else pal["ink"]
-            op = 1.0 if lv == 0 else 0.22 + 0.78 * (lv / steps)
-            out.append(f'<text class="d" x="{LEFT}" y="{base:.1f}" '
-                       f'xml:space="preserve" fill="{fill}" opacity="{op:.2f}"'
-                       f'>{esc(line)}</text>')
 
-    # Legend, using the same ramp so the mapping is readable rather than implied.
-    ly = H - 26
-    out.append(rule(P, ly - 16, W - P * 2, pal))
-    out.append(f'<text class="k" x="{P}" y="{ly + 4}">LESS</text>')
-    for i in range(steps + 1):
-        x = P + 42 + i * 15
-        fill = pal["faint"] if i == 0 else pal["ink"]
-        op = 1.0 if i == 0 else 0.22 + 0.78 * (i / steps)
-        ch = "·" if i == 0 else RAMP[i]
-        out.append(f'<text class="d" x="{x}" y="{ly + 6}" fill="{fill}" '
-                   f'opacity="{op:.2f}">{esc(ch)}</text>')
-    out.append(f'<text class="k" x="{P + 42 + (steps + 1) * 15 + 6}" y="{ly + 4}">MORE</text>')
+    for (fill, op), refs in sorted(buckets.items(), key=lambda kv: kv[0][1]):
+        o.append(f'<g fill="{fill}" opacity="{op}">' + "".join(refs) + "</g>")
 
-    peak_date, peak = max(days, key=lambda kv: kv[1])
-    out.append(f'<text class="k" x="{W - P}" y="{ly + 4}" text-anchor="end">'
-               f"BUSIEST DAY {peak} ON "
-               f"{peak_date.strftime('%d %b %Y').lstrip('0').upper()}</text>")
-    out.append("</svg>")
-    return "".join(out)
+    fy = GRID_Y + 7 * PITCH + 16
+    o.append(rule(P, fy, W - P * 2, pal))
+    o.append(f'<text class="k" x="{P}" y="{fy + 21}">LESS</text>')
+    for i in range(STEPS + 1):
+        o.append(f'<use href="#c" x="{P + 40 + i * PITCH}" y="{fy + 11}" '
+                 f'fill="{pal["faint"] if i == 0 else pal["ink"]}" '
+                 f'opacity="{1.0 if i == 0 else OPACITY[i]}"/>')
+    o.append(f'<text class="k" x="{P + 40 + (STEPS + 1) * PITCH + 4}" y="{fy + 21}">'
+             f"MORE</text>")
+    # Place the brass swatch off the measured width of its own label. The
+    # .k class is 9.5px at 0.1em tracking, so each glyph advances 6.65px; a
+    # guessed offset collides with the text as soon as the date gets longer.
+    busiest = (f"BUSIEST DAY, {peak} ON "
+               f"{peak_date.strftime('%d %b %Y').lstrip('0').upper()}")
+    label_w = len(busiest) * (9.5 * 0.6 + 0.95)
+    o.append(f'<use href="#c" x="{W - P - label_w - 20:.0f}" y="{fy + 11}" '
+             f'fill="{pal["accent"]}"/>')
+    o.append(f'<text class="k" x="{W - P}" y="{fy + 21}" text-anchor="end">'
+             f"{busiest}</text>")
+    o.append("</svg>")
+    return "".join(o)
 
 
 # --------------------------------------------------------------------------
@@ -480,14 +240,8 @@ def main() -> int:
     data = fetch(token, login)
     start, end = data["window"]
     print(f"  window {start} .. {end} (UTC days, pinned)")
-    print(f"  {len(data['repos'])} public source repos")
 
-    graphics = {
-        "stats": draw_stats,
-        "streak": draw_streak,
-        "langs": draw_langs,
-        "year": draw_year,
-    }
+    graphics = {"year": draw_year}
     for name, fn in graphics.items():
         for theme, pal in THEMES.items():
             out = ROOT / f"{name}-{theme}.svg"
