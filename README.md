@@ -7,13 +7,13 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="hd-name-dark.svg">
-  <img alt="Mustafa Africawala — founding applied AI engineer at First Concepts, MSc at UCL, London" src="hd-name-light.svg" width="880">
+  <img alt="Mustafa Africawala - founding applied AI engineer at First Concepts, MSc at UCL, London" src="hd-name-light.svg" width="880">
 </picture>
 
 > Applied AI engineer in London. I build agent systems and the evaluation<br>
 > layer that shows whether they actually work — architecture, LLM-as-judge<br>
 > harnesses, and the tracing underneath both. Currently founding engineer at<br>
-> First Concepts, finishing an MSc at UCL, and teaching 24k people to code.
+> First Concepts, Recently graduated with an MSc at UCL, and teaching 24k people to code.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="hd-experience-dark.svg">
@@ -22,7 +22,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="timeline-dark.svg">
-  <img alt="Experience timeline: BTech at Pandit Deendayal Energy University 2019 to 2023, MSc at UCL to June 2026, AI engineering intern at IFRC in 2025, software engineer at Chaser 2025 to 2026, founding applied AI engineer at First Concepts from May 2026 to now" src="timeline-light.svg" width="880">
+  <img alt="Experience timeline: BTech at PDEU 2019 to 2023, MSc at UCL to June 2026, AI engineering intern at IFRC in 2025, software engineer at Chaser 2025 to 2026, founding applied AI engineer at First Concepts from May 2026 to now" src="timeline-light.svg" width="880">
 </picture>
 
 <picture>
